@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Assistente Educacional</title>
+  <style>
+    /* Reset básico */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #eef2f7;
+      color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    .container {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 600px;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .header .icon {
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+    }
+    h1 {
+      font-size: 2rem;
+      color: #0052cc;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .prompt-label {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #0052cc;
+      margin-bottom: 0.5rem;
+    }
+    textarea {
+      resize: vertical;
+      padding: 1rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      min-height: 200px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #0052cc;
+      box-shadow: 0 0 0 2px rgba(0,82,204,0.2);
+    }
+    button {
+      align-self: flex-end;
+      background: #0052cc;
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #003d99;
+    }
+    #resposta {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: #f7f9fc;
+      border-left: 4px solid #0052cc;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      min-height: 100px;
+    }
+    @media (max-width: 480px) {
+      .container {
+        padding: 1rem;
+      }
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="icon" aria-hidden="true">
+        <!-- Ícone de livro digital SVG -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0052cc">
+          <path d="M3 4.5A2.5 2.5 0 015.5 2h12A2.5 2.5 0 0120 4.5v15a.5.5 0 01-.757.429L12 15.25l-7.243 4.679A.5.5 0 014 19.5v-15zM6 4a.5.5 0 00-.5.5V18l6.243-4.028a.5.5 0 01.514 0L18.5 18V4.5a.5.5 0 00-.5-.5h-12z" />
+        </svg>
+      </div>
+      <h1>Assistente Educacional</h1>
+    </div>
+    <form id="form-pergunta">
+      <label for="pergunta" class="prompt-label">Digite sua pergunta</label>
+      <textarea id="pergunta" name="pergunta" placeholder="Escreva aqui o que você deseja saber..." required></textarea>
+      <button type="submit">Enviar</button>
+    </form>
+    <div id="resposta">Aguardando sua pergunta…</div>
+  </div>
+
+  <script>
+  const form = document.getElementById('form-pergunta');
+  const textarea = document.getElementById('pergunta');
+  const respostaDiv = document.getElementById('resposta');
+
+  // Enviar o formulário ao pressionar Enter (sem Shift) no textarea
+  textarea.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault(); // impede quebra de linha
+      form.requestSubmit(); // envia o form
+    }
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pergunta = textarea.value.trim();
+    if (!pergunta) return; // não envia se vazio
+    respostaDiv.textContent = 'Carregando…';
+
+    try {
+      // Aqui a URL da API (relativa, para usar no Vercel)
+      const resp = await fetch('/api/pergunta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pergunta })
+      });
+
+      const dados = await resp.json();
+      if (resp.ok) {
+        respostaDiv.textContent = dados.resposta || 'Sem resposta recebida.';
+      } else {
+        respostaDiv.textContent = `Erro ${resp.status}: ${dados.message || '—'}`;
+      }
+    } catch (err) {
+      console.error(err);
+      respostaDiv.textContent = 'Erro ao conectar com o servidor.';
+    }
+
+    textarea.value = ''; // limpa o campo após enviar
+  });
+  </script>
+
+</body>
+</html>
